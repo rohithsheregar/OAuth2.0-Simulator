@@ -10,6 +10,7 @@ Simulates three roles inside one Flask app:
   /lab                          → Serves the virtual lab page
 """
 
+import os
 import time
 from flask import (Flask, request, jsonify, redirect, render_template,
                    session, url_for, send_from_directory)
@@ -610,4 +611,9 @@ def expire_token():
     return jsonify({"error": "not found"}), 404
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False
+    )
