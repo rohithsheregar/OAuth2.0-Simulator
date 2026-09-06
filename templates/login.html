@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — OAuth2 Authorization Server</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    }
+    .card {
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 420px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+    .lock-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+    h1 { color: #fff; font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+    .subtitle { color: rgba(255,255,255,0.55); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+    .app-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(102,126,234,0.2);
+      border: 1px solid rgba(102,126,234,0.4);
+      border-radius: 6px; padding: 4px 10px;
+      color: #a5b4fc; font-size: 13px; font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .scope-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 28px;
+    }
+    .scope-box p { color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.6px; }
+    .scope-tag {
+      display: inline-block;
+      background: rgba(102,126,234,0.25);
+      border-radius: 4px;
+      padding: 2px 8px;
+      color: #c4b5fd;
+      font-size: 12px;
+      margin: 2px;
+    }
+    label { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500; display: block; margin-bottom: 8px; }
+    input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 18px;
+    }
+    input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.2); }
+    input::placeholder { color: rgba(255,255,255,0.3); }
+    .error-msg {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fca5a5;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+    .hint {
+      margin-top: 20px;
+      padding: 12px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.6;
+    }
+    .hint strong { color: rgba(255,255,255,0.55); }
+    .divider { border-top: 1px solid rgba(255,255,255,0.08); margin: 24px 0; }
+    .server-badge { text-align: center; color: rgba(255,255,255,0.25); font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="lock-icon">🔐</div>
+    <h1>Sign in to continue</h1>
+    <p class="subtitle">The application below is requesting access to your account.</p>
+
+    <div class="app-badge">
+      <span>🖥</span>
+      <span>{{ client_name }}</span>
+    </div>
+
+    <div class="scope-box">
+      <p>Permissions requested</p>
+      {% for s in scope.split() %}
+        <span class="scope-tag">{{ s }}</span>
+      {% endfor %}
+    </div>
+
+    {% if error %}
+      <div class="error-msg">⚠ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/login">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" placeholder="e.g. alice" autocomplete="username" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+
+      <button class="btn" type="submit">Sign In</button>
+    </form>
+
+    <div class="hint">
+      <strong>Demo accounts:</strong><br>
+      alice / pass123 &nbsp;·&nbsp; bob / letmein &nbsp;·&nbsp; rohith / rohith99
+    </div>
+
+    <div class="divider"></div>
+    <div class="server-badge">OAuth2 Authorization Server — Simulation Lab</div>
+  </div>
+</body>
+</html>

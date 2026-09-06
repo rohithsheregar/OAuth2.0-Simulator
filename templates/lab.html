@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OAuth2 Virtual Lab — BCS703 · Group 29</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="/lab">
+      <strong>OAuth2 Virtual Lab</strong>
+      <span>Authorization Code Grant · BCS703 Cryptography and Network Security</span>
+    </a>
+    <div class="header-actions">
+      <span class="server-state" id="serverStatus"><i></i><span>Checking server</span></span>
+      <a class="text-button" href="/report" target="_blank" rel="noopener">Report</a>
+      <button class="ghost-button" id="demoBtn" type="button">Play flow</button>
+      <button class="text-button" id="resetBtn" type="button">Reset</button>
+    </div>
+  </header>
+
+  <div class="narrator" id="narrator" hidden>
+    <span class="narrator-step" id="narratorStep">DEMO</span>
+    <p id="narratorText">Starting the Authorization Code Grant…</p>
+  </div>
+
+  <main class="page-shell">
+    <section class="panel steps-panel">
+      <p class="panel-label">Steps</p>
+      <ol class="workflow" id="workflow" aria-label="OAuth2 flow">
+        <li class="flow-step active" data-step="0"><span>1</span><strong>Redirect</strong><small>GET /authorize</small></li>
+        <li class="flow-step" data-step="1"><span>2</span><strong>Login</strong><small>POST /login</small></li>
+        <li class="flow-step" data-step="2"><span>3</span><strong>Consent</strong><small>code + state</small></li>
+        <li class="flow-step" data-step="3"><span>4</span><strong>Exchange</strong><small>POST /token</small></li>
+        <li class="flow-step" data-step="4"><span>5</span><strong>Token</strong><small>access_token</small></li>
+        <li class="flow-step" data-step="5"><span>6</span><strong>Resource</strong><small>GET /resource</small></li>
+      </ol>
+    </section>
+
+    <article class="lab-stage" id="theater">
+      <section class="panel flow-diagram" id="flowDiagram" aria-label="Authorization Code Grant sequence">
+        <p class="panel-label">Flow</p>
+        <div class="dialogue">
+          <article class="seq-actor" id="actor-client">
+            <span class="actor-chip">Client</span>
+            <small>Third-party app</small>
+          </article>
+          <article class="seq-actor" id="actor-auth">
+            <span class="actor-chip">Authorization Server</span>
+            <small>Login, consent, tokens</small>
+          </article>
+          <article class="seq-actor" id="actor-resource">
+            <span class="actor-chip">Resource Server</span>
+            <small>Protected data</small>
+          </article>
+        </div>
+
+        <div class="seq-grid" id="sequenceGrid">
+          <div class="seq-row" data-seq="0"><div class="seq-cell from-client"><span class="seq-arrow"><i class="packet"></i><span>1 · GET /authorize · client_id, scope, state</span></span></div><div class="seq-cell idle"></div></div>
+          <div class="seq-row" data-seq="1"><div class="seq-cell from-client"><span class="seq-arrow"><i class="packet"></i><span>2 · POST /login · username + password</span></span></div><div class="seq-cell idle"></div></div>
+          <div class="seq-row" data-seq="2"><div class="seq-cell from-client"><span class="seq-arrow reverse"><i class="packet"></i><span>3 · 302 callback · code + state</span></span></div><div class="seq-cell idle"></div></div>
+          <div class="seq-row" data-seq="3"><div class="seq-cell from-client"><span class="seq-arrow"><i class="packet"></i><span>4 · POST /token · code + client_secret</span></span></div><div class="seq-cell idle"></div></div>
+          <div class="seq-row" data-seq="4"><div class="seq-cell from-client"><span class="seq-arrow reverse"><i class="packet"></i><span>5 · access_token issued</span></span></div><div class="seq-cell idle"></div></div>
+          <div class="seq-row" data-seq="5"><div class="seq-cell idle-left"></div><div class="seq-cell from-auth"><span class="seq-arrow"><i class="packet"></i><span>6 · GET /resource · Bearer token</span></span></div></div>
+        </div>
+      </section>
+
+      <section class="panel packet-board" id="packetBoard" aria-label="Request and response for this step">
+        <p class="panel-label">Request / response</p>
+        <div class="letter-meta">
+          <p class="eyebrow" id="packetEyebrow">Waiting</p>
+          <h2 id="packetTitle">No packet yet</h2>
+          <span class="path-pill" id="packetPath">—</span>
+        </div>
+        <div class="packet-split">
+          <article class="packet-pane request">
+            <header><span>Request</span><small id="requestFrom">outbound</small></header>
+            <pre id="requestBody">Run a step. The request for that hop in the flow appears here.</pre>
+          </article>
+          <article class="packet-pane response" id="responsePane">
+            <header><span>Response</span><small id="responseStatus">Waiting</small></header>
+            <pre id="responseBody">The matching response for the same hop appears here.</pre>
+          </article>
+        </div>
+        <div class="packet-tabs" id="packetTabs" hidden></div>
+      </section>
+
+      <section class="panel work-panel">
+        <p class="panel-label">Send</p>
+        <header class="sheet-head">
+          <p class="eyebrow" id="stepEyebrow">Step 01</p>
+          <span class="status-pill" id="stateBadge">Ready</span>
+        </header>
+        <h1 id="stepTitle">Prepare the authorization request</h1>
+        <p class="lede" id="whyBox">The client redirects the user’s browser to the Authorization Server. It never asks for the password itself.</p>
+        <p class="progress-note" id="progressLabel">Step 1 of 6</p>
+
+        <form class="step-form" id="form-0" novalidate>
+          <div class="field-grid">
+            <label>Client ID<input id="clientId" value="client_abc123" readonly></label>
+            <label>Requested scopes<input id="scope" value="read:profile read:email"></label>
+            <label>state<input id="stateValue" value="csrf_guard_7f3k"></label>
+            <label>Redirect URI<input id="redirectUri" value="http://localhost:5000/callback" readonly></label>
+          </div>
+          <button class="primary-button" type="submit">Start Authorization</button>
+        </form>
+
+        <form class="step-form" id="form-1" novalidate hidden>
+          <div class="field-grid two-columns">
+            <label>Username<input id="username" value="alice" autocomplete="username"></label>
+            <label>Password<input id="password" type="password" value="pass123" autocomplete="current-password"></label>
+          </div>
+          <div class="account-picker">
+            <button type="button" data-user="alice" data-password="pass123">alice</button>
+            <button type="button" data-user="bob" data-password="letmein">bob</button>
+            <button type="button" data-user="rohith" data-password="rohith99">rohith</button>
+          </div>
+          <button class="primary-button" type="submit">Login</button>
+        </form>
+
+        <form class="step-form" id="form-2" novalidate hidden>
+          <p class="form-intro" id="consentText">Review the requested permissions before granting access.</p>
+          <div class="scope-list" id="scopeList"></div>
+          <div class="button-row">
+            <button class="secondary-button danger-button" id="denyBtn" type="button">Deny</button>
+            <button class="primary-button" type="submit">Approve Consent</button>
+          </div>
+        </form>
+
+        <form class="step-form" id="form-3" novalidate hidden>
+          <div class="field-grid two-columns">
+            <label>Authorization code<input id="authCode" readonly></label>
+            <label>Client secret<input id="clientSecret" value="secret_xyz789"></label>
+          </div>
+          <button class="primary-button" type="submit">Exchange Code for Token</button>
+        </form>
+
+        <form class="step-form" id="form-4" novalidate hidden>
+          <p class="form-intro">The token is in the response pane. Continue to the Resource Server.</p>
+          <div class="token-preview" id="tokenPreview" hidden></div>
+          <button class="primary-button" type="submit">Continue to resource</button>
+        </form>
+
+        <form class="step-form" id="form-5" novalidate hidden>
+          <label>Authorization header<input id="accessToken" readonly></label>
+          <button class="primary-button" type="submit">Access Resource</button>
+        </form>
+
+        <div class="success-result" id="resultPanel" hidden></div>
+      </section>
+
+      <footer class="artefacts">
+        <div class="credential-card" id="stateCredential"><span>state</span><code id="stateDisplay">Pending</code><small id="stateLife">Must round-trip</small></div>
+        <div class="credential-card" id="codeCredential"><span>Authorization code</span><code id="codeDisplay">Not issued</code><small id="codeLife">60s · single-use</small></div>
+        <div class="credential-card" id="tokenCredential"><span>Access token</span><code id="tokenDisplay">Not issued</code><small id="tokenLife">1 hour · Bearer</small></div>
+        <details>
+          <summary>In-memory store</summary>
+          <div class="store-box" id="storeBox"><p class="store-empty">Empty</p></div>
+        </details>
+      </footer>
+    </article>
+
+    <section class="security-section">
+      <p class="eyebrow">Test cases on this flow</p>
+      <h2>Negative checks</h2>
+      <p>These hit the same Flask validators. Complete the flow first, then run a check — it still writes into the request/response board.</p>
+      <div class="security-actions">
+        <button class="security-test" type="button" data-challenge="secret">Invalid client secret</button>
+        <button class="security-test" type="button" data-challenge="expire-code">Expired authorization code</button>
+        <button class="security-test" type="button" data-challenge="replay">Reused authorization code</button>
+        <button class="security-test" type="button" data-challenge="redirect">Mismatched redirect_uri</button>
+        <button class="security-test" type="button" data-challenge="bad-token">Invalid access token</button>
+        <button class="security-test" type="button" data-challenge="expire-token">Expired access token</button>
+        <button class="security-test" type="button" data-challenge="state">state round-trip</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lab-footer">
+    <span>BCS703 · Group 29 · Rohith · Nishith R Poojary</span>
+    <span>Virtual lab · Authorization Code Grant</span>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/lab.js"></script>
+</body>
+</html>
