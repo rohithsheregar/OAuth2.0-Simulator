@@ -1,14 +1,29 @@
 import secrets
 import urllib.parse
 
-import requests as http
-from flask import Blueprint, g, jsonify, request, session
+from flask import Blueprint, current_app, g, jsonify, request, session
 
 bp = Blueprint("client_bp", __name__)
 
 
 def _base() -> str:
     return request.host_url.rstrip("/")
+
+
+def _internal_request(method: str, path: str, *, base: str, **kwargs):
+    """Call another local route without making the service call itself over HTTP."""
+    trace_keys = (
+        "_lab_beat", "_lab_req_body", "_lab_req_headers", "_lab_req_query",
+    )
+    outer_trace = {key: getattr(g, key, None) for key in trace_keys}
+    try:
+        with current_app.test_client() as internal_client:
+            return getattr(internal_client, method)(path, base_url=base, **kwargs)
+    finally:
+        # The nested request shares Flask's application context. Restore the
+        # callback/profile request metadata before its own after_request hook.
+        for key, value in outer_trace.items():
+            setattr(g, key, value)
 
 
 @bp.route("/app/login/start", methods=["POST"])
@@ -54,19 +69,32 @@ def app_callback():
         }), 400
 
     base = _base()
-    token_resp = http.post(
-        f"{base}/token",
-        data={
-            "grant_type":    "authorization_code",
-            "code":          code,
-            "redirect_uri":  f"{base}/app/callback",
-            "client_id":     "client_abc123",
-            "client_secret": "secret_xyz789",
+    # Dispatch the back-channel token request inside this process. A normal
+    # requests.post() back to the public Render URL deadlocks when the service
+    # has its default single synchronous Gunicorn worker: /app/callback holds
+    # the worker while waiting for /token to receive a worker of its own.
+    # Flask's internal client preserves the same request/response behavior and
+    # still lets the app's tracing hooks record the /token exchange.
+    token_data = {
+        "grant_type":    "authorization_code",
+        "code":          code,
+        "redirect_uri":  f"{base}/app/callback",
+        "client_id":     "client_abc123",
+        "client_secret": "secret_xyz789",
+    }
+    token_resp = _internal_request(
+        "post",
+        "/token",
+        base=base,
+        data=token_data,
+        headers={
+            "X-Lab-Actor": "client",
+            "X-Lab-Beat": "7",
+            "X-Lab-Mode": "1",
         },
-        headers={"X-Lab-Actor": "client", "X-Lab-Beat": "7"},
     )
-    token_body = token_resp.json()
-    if not token_resp.ok:
+    token_body = token_resp.get_json(silent=True) or {}
+    if not token_resp.is_json or token_resp.status_code >= 400:
         return jsonify(token_body), token_resp.status_code
 
     session["app_token"] = token_body["access_token"]
@@ -87,16 +115,19 @@ def app_profile():
         }), 401
 
     base = _base()
-    res  = http.get(
-        f"{base}/resource",
+    res  = _internal_request(
+        "get",
+        "/resource",
+        base=base,
         headers={
             "Authorization": f"Bearer {token}",
             "X-Lab-Actor":   "client",
             "X-Lab-Beat":    "9",
+            "X-Lab-Mode":    "1",
         },
     )
-    body = res.json()
-    if not res.ok:
+    body = res.get_json(silent=True) or {}
+    if not res.is_json or res.status_code >= 400:
         return jsonify(body), res.status_code
 
     session["app_profile"] = body
