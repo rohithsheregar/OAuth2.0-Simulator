@@ -3,189 +3,345 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OAuth2 Virtual Lab — BCS703 · Group 29</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css">
+  <meta name="description" content="OAuth 2.0 Authorization Code Grant virtual lab — BCS703 Group 29">
+  <title>OAuth 2.0 Virtual Lab — BCS703 · Group 29</title>
+  <link rel="stylesheet" href="/static/css/lab.css">
 </head>
 <body>
-  <header class="app-header">
-    <a class="brand" href="/lab">
-      <strong>OAuth2 Virtual Lab</strong>
-      <span>Authorization Code Grant · BCS703 Cryptography and Network Security</span>
-    </a>
-    <div class="header-actions">
-      <span class="server-state" id="serverStatus"><i></i><span>Checking server</span></span>
-      <a class="text-button" href="/report" target="_blank" rel="noopener">Report</a>
-      <button class="ghost-button" id="demoBtn" type="button">Play flow</button>
-      <button class="text-button" id="resetBtn" type="button">Reset</button>
-    </div>
-  </header>
 
-  <div class="narrator" id="narrator" hidden>
-    <span class="narrator-step" id="narratorStep">DEMO</span>
-    <p id="narratorText">Starting the Authorization Code Grant…</p>
+<header id="top-bar">
+  <div class="brand">
+    <div class="brand-title">OAuth 2.0 Virtual Lab</div>
+    <div class="brand-sub">BCS703 · Group 29</div>
   </div>
 
-  <main class="page-shell">
-    <section class="panel steps-panel">
-      <p class="panel-label">Steps</p>
-      <ol class="workflow" id="workflow" aria-label="OAuth2 flow">
-        <li class="flow-step active" data-step="0"><span>1</span><strong>Redirect</strong><small>GET /authorize</small></li>
-        <li class="flow-step" data-step="1"><span>2</span><strong>Login</strong><small>POST /login</small></li>
-        <li class="flow-step" data-step="2"><span>3</span><strong>Consent</strong><small>code + state</small></li>
-        <li class="flow-step" data-step="3"><span>4</span><strong>Exchange</strong><small>POST /token</small></li>
-        <li class="flow-step" data-step="4"><span>5</span><strong>Token</strong><small>access_token</small></li>
-        <li class="flow-step" data-step="5"><span>6</span><strong>Resource</strong><small>GET /resource</small></li>
-      </ol>
-    </section>
+  <nav class="stepper" id="stepper" aria-label="Flow stages">
+    <button class="step-item" data-stage="1" id="stage-1"><span class="step-n">1</span>Start</button>
+    <button class="step-item" data-stage="2" id="stage-2"><span class="step-n">2</span>Authorize</button>
+    <button class="step-item" data-stage="3" id="stage-3"><span class="step-n">3</span>Sign In</button>
+    <button class="step-item" data-stage="4" id="stage-4"><span class="step-n">4</span>Consent</button>
+    <button class="step-item" data-stage="5" id="stage-5"><span class="step-n">5</span>Code</button>
+    <button class="step-item" data-stage="6" id="stage-6"><span class="step-n">6</span>Token</button>
+    <button class="step-item" data-stage="7" id="stage-7"><span class="step-n">7</span>Profile</button>
+  </nav>
 
-    <article class="lab-stage" id="theater">
-      <section class="panel flow-diagram" id="flowDiagram" aria-label="Authorization Code Grant sequence">
-        <p class="panel-label">Flow</p>
-        <div class="dialogue">
-          <article class="seq-actor" id="actor-client">
-            <span class="actor-chip">Client</span>
-            <small>Third-party app</small>
-          </article>
-          <article class="seq-actor" id="actor-auth">
-            <span class="actor-chip">Authorization Server</span>
-            <small>Login, consent, tokens</small>
-          </article>
-          <article class="seq-actor" id="actor-resource">
-            <span class="actor-chip">Resource Server</span>
-            <small>Protected data</small>
-          </article>
+  <div class="top-nav-controls" role="group" aria-label="Playback controls">
+    <button class="nav-arrow-btn" id="top-btn-back" title="Previous Step (Left Arrow)" aria-label="Previous Step">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <button class="nav-arrow-btn nav-primary" id="top-btn-next" title="Next Step (Right Arrow)" aria-label="Next Step">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </button>
+    <button class="nav-arrow-btn" id="top-btn-restart" title="Restart Flow (R)" aria-label="Restart Flow">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+      </svg>
+    </button>
+    <div class="step-indicator" id="step-counter" aria-live="polite">Step 0 / 10</div>
+  </div>
+
+  <nav class="top-links" aria-label="Documentation">
+    <a class="top-link-btn docs-toggle" href="/explain" id="tab-explain" title="Switch to OAuth 2.0 documentation" aria-label="Open OAuth 2.0 documentation">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/>
+        <path d="M4 5.5v16M8 7h8M8 11h8"/>
+      </svg>
+      <span>Docs</span>
+    </a>
+  </nav>
+</header>
+
+<main id="stage-area">
+  <!-- LEFT PANE: WHAT THE USER SEES (BROWSER) -->
+  <section id="left-pane" role="region" aria-label="What the user sees">
+    <div id="browser-mock">
+      <div class="browser-chrome">
+        <div class="browser-bar-single">
+          <div class="browser-traffic-lights" aria-hidden="true">
+            <span class="tl-dot tl-red"></span>
+            <span class="tl-dot tl-yellow"></span>
+            <span class="tl-dot tl-green"></span>
+          </div>
+          <div class="browser-nav-group">
+            <button class="browser-btn" id="browser-btn-back" title="Go back (←)" aria-label="Back">‹</button>
+            <button class="browser-btn" id="browser-btn-next" title="Go forward (→)" aria-label="Forward">›</button>
+            <button class="browser-btn" id="browser-btn-reload" title="Reload (R)" aria-label="Reload">↻</button>
+          </div>
+          <div class="address-pill">
+            <svg class="lock-icon" width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <rect x="2" y="5" width="8" height="6" rx="1.5" fill="#188038"/>
+              <path d="M4 5V3.5a2 2 0 1 1 4 0V5" stroke="#188038" stroke-width="1.4" fill="none"/>
+            </svg>
+            <span class="url-base" id="url-base">photoprint.studio</span>
+            <span class="url-path" id="url-path">/</span>
+            <div class="param-chips" id="param-chips"></div>
+          </div>
         </div>
+      </div>
 
-        <div class="seq-grid" id="sequenceGrid">
-          <div class="seq-row" data-seq="0"><div class="seq-cell from-client"><span class="seq-arrow"><i class="packet"></i><span>1 · GET /authorize · client_id, scope, state</span></span></div><div class="seq-cell idle"></div></div>
-          <div class="seq-row" data-seq="1"><div class="seq-cell from-client"><span class="seq-arrow"><i class="packet"></i><span>2 · POST /login · username + password</span></span></div><div class="seq-cell idle"></div></div>
-          <div class="seq-row" data-seq="2"><div class="seq-cell from-client"><span class="seq-arrow reverse"><i class="packet"></i><span>3 · 302 callback · code + state</span></span></div><div class="seq-cell idle"></div></div>
-          <div class="seq-row" data-seq="3"><div class="seq-cell from-client"><span class="seq-arrow"><i class="packet"></i><span>4 · POST /token · code + client_secret</span></span></div><div class="seq-cell idle"></div></div>
-          <div class="seq-row" data-seq="4"><div class="seq-cell from-client"><span class="seq-arrow reverse"><i class="packet"></i><span>5 · access_token issued</span></span></div><div class="seq-cell idle"></div></div>
-          <div class="seq-row" data-seq="5"><div class="seq-cell idle-left"></div><div class="seq-cell from-auth"><span class="seq-arrow"><i class="packet"></i><span>6 · GET /resource · Bearer token</span></span></div></div>
+      <div id="page-canvas"></div>
+    </div>
+  </section>
+
+  <div class="pane-divider" aria-hidden="true"></div>
+
+  <!-- RIGHT PANE: ANIMATED OAUTH 2.0 FLOW DIAGRAM -->
+  <section id="right-pane" role="region" aria-label="OAuth 2.0 flow animation">
+    <!-- ANIMATED OAUTH 2.0 SEQUENCE DIAGRAM -->
+    <div id="flow-diagram-wrapper">
+      <svg id="flow-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="glow-u" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-c" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-a" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-r" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- arrowhead markers (forward auto-orient) -->
+          <marker id="mh-gold" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+            <polygon points="0 0, 10 4, 0 8" fill="#FBBF24"/>
+          </marker>
+          <marker id="mh-cyan" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+            <polygon points="0 0, 10 4, 0 8" fill="#38BDF8"/>
+          </marker>
+          <marker id="mh-green" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+            <polygon points="0 0, 10 4, 0 8" fill="#4ADE80"/>
+          </marker>
+        </defs>
+
+        <!-- ── BACKGROUND ──────────────────────────────────────────── -->
+        <rect width="760" height="400" fill="#060A14" rx="0"/>
+
+        <!-- ════════════════════════════════════════════
+             ENTITY CARDS (ELEGANT ARCHITECTURAL NODES)
+             Left col: x=14..174 (width 160, center 94)
+             Right col: x=586..746 (width 160, center 666)
+             Top row: y=16..118 (height 102)
+             Bottom row: y=280..382 (height 102)
+        ═══════════════════════════════════════════════ -->
+
+        <!-- USER BROWSER (top-left) -->
+        <g id="ent-user" class="flow-entity">
+          <rect id="ent-user-bg" x="14" y="16" width="160" height="102" rx="12" fill="#0A1120" stroke="#1E293B" stroke-width="1.6"/>
+          <rect x="26" y="28" width="34" height="34" rx="8" fill="#111B30" stroke="#2563EB" stroke-width="1.2"/>
+          <path d="M35 48h16m-12-11h8a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2z" stroke="#60A5FA" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <text x="68" y="42" font-family="Inter,system-ui,sans-serif" font-size="12.5" font-weight="700" fill="#F8FAFC">User Browser</text>
+          <text x="68" y="55" font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="500" fill="#94A3B8">Resource Owner</text>
+          <rect x="24" y="74" width="140" height="24" rx="6" fill="#060911" stroke="#1E293B" stroke-width="1"/>
+          <circle cx="34" cy="86" r="2.5" fill="#10B981"/>
+          <text x="42" y="89.5" font-family="monospace" font-size="9.5" fill="#93C5FD">photoprint.studio</text>
+        </g>
+
+        <!-- AUTH SERVER (top-right) -->
+        <g id="ent-auth" class="flow-entity">
+          <rect id="ent-auth-bg" x="586" y="16" width="160" height="102" rx="12" fill="#141004" stroke="#2B2107" stroke-width="1.6"/>
+          <rect x="598" y="28" width="34" height="34" rx="8" fill="#241B08" stroke="#FBBF24" stroke-width="1.2"/>
+          <circle cx="615" cy="41" r="4.5" stroke="#FBBF24" stroke-width="1.4" fill="none"/>
+          <path d="M615 45.5v7m0-3h3m-3 2h2" stroke="#FBBF24" stroke-width="1.4" stroke-linecap="round"/>
+          <text id="auth-name-text" x="640" y="42" font-family="Inter,system-ui,sans-serif" font-size="12.5" font-weight="700" fill="#F8FAFC">Google IdP</text>
+          <text id="auth-badge-text" x="640" y="55" font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="500" fill="#FDE047">Auth Server</text>
+          <rect x="596" y="74" width="140" height="24" rx="6" fill="#0A0802" stroke="#2B2107" stroke-width="1"/>
+          <circle cx="606" cy="86" r="2.5" fill="#FBBF24"/>
+          <text id="auth-domain-text" x="614" y="89.5" font-family="monospace" font-size="9" fill="#FDE047">accounts.google.com</text>
+        </g>
+
+        <!-- CLIENT APP (bottom-left) -->
+        <g id="ent-client" class="flow-entity">
+          <rect id="ent-client-bg" x="14" y="280" width="160" height="102" rx="12" fill="#04121F" stroke="#0E283D" stroke-width="1.6"/>
+          <rect x="26" y="292" width="34" height="34" rx="8" fill="#081E30" stroke="#38BDF8" stroke-width="1.2"/>
+          <rect x="33" y="300" width="20" height="7" rx="1.5" stroke="#38BDF8" stroke-width="1.2" fill="none"/>
+          <rect x="33" y="311" width="20" height="7" rx="1.5" stroke="#38BDF8" stroke-width="1.2" fill="none"/>
+          <circle cx="37" cy="303.5" r="1" fill="#10B981"/><circle cx="37" cy="314.5" r="1" fill="#38BDF8"/>
+          <text x="68" y="306" font-family="Inter,system-ui,sans-serif" font-size="12.5" font-weight="700" fill="#F8FAFC">PhotoPrint API</text>
+          <text x="68" y="319" font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="500" fill="#38BDF8">Client Backend</text>
+          <rect x="24" y="338" width="140" height="24" rx="6" fill="#020C14" stroke="#0E283D" stroke-width="1"/>
+          <circle cx="34" cy="350" r="2.5" fill="#38BDF8"/>
+          <text x="42" y="353.5" font-family="monospace" font-size="9" fill="#7DD3FC">localhost:5000/app</text>
+        </g>
+
+        <!-- RESOURCE SERVER (bottom-right) -->
+        <g id="ent-resource" class="flow-entity">
+          <rect id="ent-resource-bg" x="586" y="280" width="160" height="102" rx="12" fill="#03160B" stroke="#0C2F1A" stroke-width="1.6"/>
+          <rect x="598" y="292" width="34" height="34" rx="8" fill="#062211" stroke="#4ADE80" stroke-width="1.2"/>
+          <ellipse cx="615" cy="302" rx="9" ry="3" stroke="#4ADE80" stroke-width="1.2" fill="none"/>
+          <path d="M606 302v6c0 1.6 4 3 9 3s9-1.4 9-3v-6" stroke="#4ADE80" stroke-width="1.2" fill="none"/>
+          <path d="M606 308v6c0 1.6 4 3 9 3s9-1.4 9-3v-6" stroke="#4ADE80" stroke-width="1.2" fill="none"/>
+          <text x="640" y="306" font-family="Inter,system-ui,sans-serif" font-size="12.5" font-weight="700" fill="#F8FAFC">Resource Server</text>
+          <text x="640" y="319" font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="500" fill="#4ADE80">Protected User API</text>
+          <rect x="596" y="338" width="140" height="24" rx="6" fill="#010D06" stroke="#0C2F1A" stroke-width="1"/>
+          <circle cx="606" cy="350" r="2.5" fill="#4ADE80"/>
+          <text id="res-domain-text" x="614" y="353.5" font-family="monospace" font-size="9" fill="#86EFAC">api.google.com/user</text>
+        </g>
+
+        <!-- ════════════════════════════════════════════
+             VERTICAL LIFELINES (dashed, always visible)
+        ═══════════════════════════════════════════════ -->
+        <line x1="94"  y1="118" x2="94"  y2="280" stroke="#1E293B" stroke-width="1.5" stroke-dasharray="5 5"/>
+        <line x1="666" y1="118" x2="666" y2="280" stroke="#1E293B" stroke-width="1.5" stroke-dasharray="5 5"/>
+
+        <!-- ════════════════════════════════════════════
+             ARROWS — Entire continuous arrow lines visible
+             Compact message badges placed above or alongside
+             JS adds class "arrow-active" to show + animate
+        ═══════════════════════════════════════════════ -->
+
+        <!-- Beat 1: User → Client (POST /app/login/start) -->
+        <g id="arr-1" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="94" y1="118" x2="94" y2="276" stroke="#FBBF24" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-gold)"/>
+          <rect x="104" y="186" width="138" height="24" rx="12" fill="#0A0E18" stroke="#FBBF24" stroke-width="1.2"/>
+          <text x="173" y="202" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#FDE047" text-anchor="middle">POST /app/login</text>
+        </g>
+
+        <!-- Beat 2: User → Auth (GET /authorize redirect) -->
+        <g id="arr-2" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="174" y1="48" x2="582" y2="48" stroke="#FBBF24" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-gold)"/>
+          <rect x="295" y="26" width="170" height="24" rx="12" fill="#0A0E18" stroke="#FBBF24" stroke-width="1.2"/>
+          <text x="380" y="42" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#FDE047" text-anchor="middle">GET /authorize (302)</text>
+        </g>
+
+        <!-- Beat 3: User → Auth (POST /login credentials) -->
+        <g id="arr-3" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="174" y1="70" x2="582" y2="70" stroke="#FBBF24" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-gold)"/>
+          <rect x="295" y="48" width="170" height="24" rx="12" fill="#0A0E18" stroke="#FBBF24" stroke-width="1.2"/>
+          <text x="380" y="64" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#FDE047" text-anchor="middle">POST /login (Credentials)</text>
+        </g>
+
+        <!-- Beat 4: Auth → User (GET /consent) -->
+        <g id="arr-4" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="586" y1="92" x2="178" y2="92" stroke="#FBBF24" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-gold)"/>
+          <rect x="295" y="70" width="170" height="24" rx="12" fill="#0A0E18" stroke="#FBBF24" stroke-width="1.2"/>
+          <text x="380" y="86" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#FDE047" text-anchor="middle">GET /consent (Scopes)</text>
+        </g>
+
+        <!-- Beat 5: Auth → User (302 + auth code) -->
+        <g id="arr-5" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="586" y1="112" x2="178" y2="112" stroke="#FBBF24" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-gold)"/>
+          <rect x="295" y="90" width="170" height="24" rx="12" fill="#0A0E18" stroke="#FBBF24" stroke-width="1.2"/>
+          <text x="380" y="106" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#FDE047" text-anchor="middle">302 Redirect (?code=...)</text>
+        </g>
+
+        <!-- Beat 6: User → Client (browser delivers code to /callback) -->
+        <g id="arr-6" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="94" y1="118" x2="94" y2="276" stroke="#FBBF24" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-gold)"/>
+          <rect x="104" y="186" width="148" height="24" rx="12" fill="#0A0E18" stroke="#FBBF24" stroke-width="1.2"/>
+          <text x="178" y="202" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#FDE047" text-anchor="middle">GET /app/callback?code</text>
+        </g>
+
+        <!-- Beat 7: Client → Auth (POST /token back-channel) -->
+        <g id="arr-7" class="flow-arrow" opacity="0">
+          <path class="arrow-line" d="M 174 298 Q 380 180 582 95" fill="none" stroke="#38BDF8" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-cyan)"/>
+          <rect x="295" y="142" width="170" height="24" rx="12" fill="#03121F" stroke="#38BDF8" stroke-width="1.2"/>
+          <text x="380" y="158" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#38BDF8" text-anchor="middle">POST /token (Code+Secret)</text>
+        </g>
+
+        <!-- Beat 8: Auth → Client (access token) -->
+        <g id="arr-8" class="flow-arrow" opacity="0">
+          <path class="arrow-line" d="M 586 102 Q 380 220 178 312" fill="none" stroke="#38BDF8" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-cyan)"/>
+          <rect x="295" y="232" width="170" height="24" rx="12" fill="#03121F" stroke="#38BDF8" stroke-width="1.2"/>
+          <text x="380" y="248" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#38BDF8" text-anchor="middle">200 OK (access_token)</text>
+        </g>
+
+        <!-- Beat 9: Client → Resource (GET /resource + bearer token) -->
+        <g id="arr-9" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="174" y1="315" x2="582" y2="315" stroke="#4ADE80" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-green)"/>
+          <rect x="295" y="285" width="170" height="24" rx="12" fill="#02140B" stroke="#4ADE80" stroke-width="1.2"/>
+          <text x="380" y="301" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#4ADE80" text-anchor="middle">GET /resource (Bearer Token)</text>
+        </g>
+
+        <!-- Beat 10: Resource → Client (profile data) -->
+        <g id="arr-10" class="flow-arrow" opacity="0">
+          <line class="arrow-line" x1="586" y1="345" x2="178" y2="345" stroke="#4ADE80" stroke-width="2.8"
+                stroke-dasharray="8 5" marker-end="url(#mh-green)"/>
+          <rect x="295" y="320" width="170" height="24" rx="12" fill="#02140B" stroke="#4ADE80" stroke-width="1.2"/>
+          <text x="380" y="336" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#4ADE80" text-anchor="middle">200 OK User Profile JSON</text>
+        </g>
+
+      </svg>
+    </div><!-- /#flow-diagram-wrapper -->
+
+    <!-- MINIMAL INTRO & EXPLANATION TRIGGER (NEGLIGIBLE SPACE) -->
+    <div id="lab-intro-bar">
+      <div class="intro-left">
+        <span class="intro-step-badge" id="intro-step-badge">STEP 0 · READY</span>
+        <span class="intro-summary" id="intro-summary">Click "Continue with Google" to start the OAuth 2.0 flow.</span>
+      </div>
+      <button type="button" class="btn-explain-trigger" id="btn-open-explain" title="Scroll to the technical details below">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+        <span>View details below</span>
+      </button>
+    </div>
+
+    <!-- DETAILS LIVE BELOW THE ANIMATION: scroll the right pane to inspect them. -->
+    <section id="technical-inspector" aria-label="Live request and response details">
+      <div class="technical-heading">
+        <div>
+          <span class="technical-eyebrow">LIVE PROTOCOL DETAILS</span>
+          <h2>Request &amp; response</h2>
+          <p>Scroll down to inspect the current exchange, credentials, and flow status.</p>
         </div>
-      </section>
+        <button class="tech-copy-btn inline-copy-btn" id="inline-tech-copy-btn" title="Copy the current technical JSON">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span id="inline-copy-btn-text">Copy JSON</span>
+        </button>
+      </div>
 
-      <section class="panel packet-board" id="packetBoard" aria-label="Request and response for this step">
-        <p class="panel-label">Request / response</p>
-        <div class="letter-meta">
-          <p class="eyebrow" id="packetEyebrow">Waiting</p>
-          <h2 id="packetTitle">No packet yet</h2>
-          <span class="path-pill" id="packetPath">—</span>
-        </div>
-        <div class="packet-split">
-          <article class="packet-pane request">
-            <header><span>Request</span><small id="requestFrom">outbound</small></header>
-            <pre id="requestBody">Run a step. The request for that hop in the flow appears here.</pre>
-          </article>
-          <article class="packet-pane response" id="responsePane">
-            <header><span>Response</span><small id="responseStatus">Waiting</small></header>
-            <pre id="responseBody">The matching response for the same hop appears here.</pre>
-          </article>
-        </div>
-        <div class="packet-tabs" id="packetTabs" hidden></div>
-      </section>
+      <div class="technical-meta">
+        <span class="tech-method-pill method-get" id="inline-tech-method">READY</span>
+        <code id="inline-tech-endpoint">/app/login</code>
+        <span class="tech-status-pill" id="inline-tech-status">200 OK · Flow Ready</span>
+      </div>
 
-      <section class="panel work-panel">
-        <p class="panel-label">Send</p>
-        <header class="sheet-head">
-          <p class="eyebrow" id="stepEyebrow">Step 01</p>
-          <span class="status-pill" id="stateBadge">Ready</span>
-        </header>
-        <h1 id="stepTitle">Prepare the authorization request</h1>
-        <p class="lede" id="whyBox">The client redirects the user’s browser to the Authorization Server. It never asks for the password itself.</p>
-        <p class="progress-note" id="progressLabel">Step 1 of 6</p>
+      <div class="technical-grid">
+        <article class="protocol-card">
+          <div class="protocol-card-header"><h3>Request</h3><span id="inline-request-label">Waiting</span></div>
+          <pre id="inline-request-json">Start the flow to see the outgoing request.</pre>
+        </article>
+        <article class="protocol-card">
+          <div class="protocol-card-header"><h3>Response</h3><span id="inline-response-label">Waiting</span></div>
+          <pre id="inline-response-json">The matching server response will appear here.</pre>
+        </article>
+      </div>
 
-        <form class="step-form" id="form-0" novalidate>
-          <div class="field-grid">
-            <label>Client ID<input id="clientId" value="client_abc123" readonly></label>
-            <label>Requested scopes<input id="scope" value="read:profile read:email"></label>
-            <label>state<input id="stateValue" value="csrf_guard_7f3k"></label>
-            <label>Redirect URI<input id="redirectUri" value="http://localhost:5000/callback" readonly></label>
-          </div>
-          <button class="primary-button" type="submit">Start Authorization</button>
-        </form>
-
-        <form class="step-form" id="form-1" novalidate hidden>
-          <div class="field-grid two-columns">
-            <label>Username<input id="username" value="alice" autocomplete="username"></label>
-            <label>Password<input id="password" type="password" value="pass123" autocomplete="current-password"></label>
-          </div>
-          <div class="account-picker">
-            <button type="button" data-user="alice" data-password="pass123">alice</button>
-            <button type="button" data-user="bob" data-password="letmein">bob</button>
-            <button type="button" data-user="rohith" data-password="rohith99">rohith</button>
-          </div>
-          <button class="primary-button" type="submit">Login</button>
-        </form>
-
-        <form class="step-form" id="form-2" novalidate hidden>
-          <p class="form-intro" id="consentText">Review the requested permissions before granting access.</p>
-          <div class="scope-list" id="scopeList"></div>
-          <div class="button-row">
-            <button class="secondary-button danger-button" id="denyBtn" type="button">Deny</button>
-            <button class="primary-button" type="submit">Approve Consent</button>
-          </div>
-        </form>
-
-        <form class="step-form" id="form-3" novalidate hidden>
-          <div class="field-grid two-columns">
-            <label>Authorization code<input id="authCode" readonly></label>
-            <label>Client secret<input id="clientSecret" value="secret_xyz789"></label>
-          </div>
-          <button class="primary-button" type="submit">Exchange Code for Token</button>
-        </form>
-
-        <form class="step-form" id="form-4" novalidate hidden>
-          <p class="form-intro">The token is in the response pane. Continue to the Resource Server.</p>
-          <div class="token-preview" id="tokenPreview" hidden></div>
-          <button class="primary-button" type="submit">Continue to resource</button>
-        </form>
-
-        <form class="step-form" id="form-5" novalidate hidden>
-          <label>Authorization header<input id="accessToken" readonly></label>
-          <button class="primary-button" type="submit">Access Resource</button>
-        </form>
-
-        <div class="success-result" id="resultPanel" hidden></div>
-      </section>
-
-      <footer class="artefacts">
-        <div class="credential-card" id="stateCredential"><span>state</span><code id="stateDisplay">Pending</code><small id="stateLife">Must round-trip</small></div>
-        <div class="credential-card" id="codeCredential"><span>Authorization code</span><code id="codeDisplay">Not issued</code><small id="codeLife">60s · single-use</small></div>
-        <div class="credential-card" id="tokenCredential"><span>Access token</span><code id="tokenDisplay">Not issued</code><small id="tokenLife">1 hour · Bearer</small></div>
-        <details>
-          <summary>In-memory store</summary>
-          <div class="store-box" id="storeBox"><p class="store-empty">Empty</p></div>
-        </details>
-      </footer>
-    </article>
-
-    <section class="security-section">
-      <p class="eyebrow">Test cases on this flow</p>
-      <h2>Negative checks</h2>
-      <p>These hit the same Flask validators. Complete the flow first, then run a check — it still writes into the request/response board.</p>
-      <div class="security-actions">
-        <button class="security-test" type="button" data-challenge="secret">Invalid client secret</button>
-        <button class="security-test" type="button" data-challenge="expire-code">Expired authorization code</button>
-        <button class="security-test" type="button" data-challenge="replay">Reused authorization code</button>
-        <button class="security-test" type="button" data-challenge="redirect">Mismatched redirect_uri</button>
-        <button class="security-test" type="button" data-challenge="bad-token">Invalid access token</button>
-        <button class="security-test" type="button" data-challenge="expire-token">Expired access token</button>
-        <button class="security-test" type="button" data-challenge="state">state round-trip</button>
+      <div class="credential-grid" aria-label="Credential and status summary">
+        <div class="credential-snapshot"><span>Flow status</span><strong id="inline-flow-status">Ready</strong></div>
+        <div class="credential-snapshot"><span>State / CSRF</span><strong id="inline-state-value">Pending</strong></div>
+        <div class="credential-snapshot"><span>Authorization code</span><strong id="inline-code-value">Not issued</strong></div>
+        <div class="credential-snapshot"><span>Access token</span><strong id="inline-token-value">Not issued</strong></div>
       </div>
     </section>
-  </main>
+  </section>
 
-  <footer class="lab-footer">
-    <span>BCS703 · Group 29 · Rohith · Nishith R Poojary</span>
-    <span>Virtual lab · Authorization Code Grant</span>
-  </footer>
+</main>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/static/lab.js"></script>
+<script type="module" src="/static/js/api.js"></script>
+<script type="module" src="/static/js/main.js"></script>
 </body>
 </html>

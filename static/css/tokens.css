@@ -1,0 +1,55 @@
+:root {
+  --lp-page:      #FFFFFF;
+  --lp-canvas:    #F3F5F9;
+  --lp-text:      #0F172A;
+  --lp-secondary: #334155;
+  --lp-tertiary:  #64748B;
+  --lp-primary:   #1D4ED8;
+  --lp-primary-h: #1E40AF;
+  --lp-success:   #047857;
+  --lp-error:     #B91C1C;
+  --lp-border:    #CBD5E1;
+  --lp-border-h:  #94A3B8;
+  --lp-chip-bg:   #EFF6FF;
+  --lp-chip-text: #1D4ED8;
+  --lp-chip-code: #7C3AED;
+  --lp-chip-code-bg: #F5F3FF;
+  --lp-chip-state: #065F46;
+  --lp-chip-state-bg: #ECFDF5;
+
+  --rp-bg:      #0A1020;
+  --rp-panel:   #101A30;
+  --rp-panel2:  #141F38;
+  --rp-border:  #24324F;
+  --rp-border2: #1E2D48;
+  --rp-text:    #F4F7FC;
+  --rp-muted:   #B4C0D8;
+  --rp-dim:     #6B7FA8;
+  --rp-front:   #FFB020;
+  --rp-back:    #38D6F5;
+  --rp-success: #4ADE80;
+  --rp-error:   #FF6B6B;
+  --rp-warning: #FBBF24;
+  --rp-code:    #A5F3FC;
+  --rp-str:     #86EFAC;
+  --rp-num:     #FCA5A5;
+  --rp-key:     #C4B5FD;
+
+  --font-ui:   "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, Consolas, "SF Mono", "Cascadia Code", monospace;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --radius:  12px;
+  --radius-s: 6px;
+  --shadow:  0 4px 24px rgba(0,0,0,0.18);
+  --shadow-s: 0 2px 8px rgba(0,0,0,0.12);
+
+  --trans: 400ms cubic-bezier(0.4,0,0.2,1);
+  --trans-fast: 200ms cubic-bezier(0.4,0,0.2,1);
+
+  --top-bar-h:  64px;
+  --ctrl-bar-h: 72px;
+}
