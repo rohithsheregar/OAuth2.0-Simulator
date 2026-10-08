@@ -1,15 +1,25 @@
 import secrets
 import time
+import os
+
+
+def _redirect_uris() -> list[str]:
+    """Return local callback URLs plus the optional hosted callback URL."""
+    uris = [
+        "http://localhost:5000/app/callback",
+        "http://127.0.0.1:5000/app/callback",
+    ]
+    public_base_url = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
+    if public_base_url:
+        uris.insert(0, f"{public_base_url}/app/callback")
+    return uris
 
 CLIENTS = {
     "client_abc123": {
         "client_id":      "client_abc123",
         "client_secret":  "secret_xyz789",
         "name":           "PhotoPrint Studio",
-        "redirect_uris":  [
-            "http://localhost:5000/app/callback",
-            "http://127.0.0.1:5000/app/callback",
-        ],
+        "redirect_uris":  _redirect_uris(),
         "allowed_scopes": ["read:profile", "read:email"],
     }
 }

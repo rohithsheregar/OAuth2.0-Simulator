@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: oauth2-simulator
+    runtime: python
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: PUBLIC_BASE_URL
+        sync: false

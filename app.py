@@ -4,14 +4,24 @@ import urllib.parse
 
 import requests as http_client
 from flask import Flask, g, jsonify, redirect, render_template, request, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import store
 import trace as tr
 from client_app import bp as client_bp
 
 app = Flask(__name__)
-app.secret_key = "oauth2-lab-secret-do-not-use-in-production"
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "oauth2-lab-secret-do-not-use-in-production",
+)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE", "0").lower() in {
+    "1", "true", "yes",
+}
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 app.register_blueprint(client_bp)
 
 _TRACED_PREFIXES = ("/authorize", "/login", "/consent", "/token", "/resource", "/app/")
